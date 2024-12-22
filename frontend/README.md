@@ -25,3 +25,21 @@ npm install <package_name>
 ```sh
 docker restart pyspur_dev-frontend-1
 ```
+
+4. Start dev server
+
+```sh
+cd frontend
+yarn install
+yarn dev
+```
+
+5. Config backend API
+
+```sh
+#src/utils/api.ts
+const API_BASE_URL = typeof window !== 'undefined'
+  ? `http://${window.location.host}/api`
+  : 'http://localhost:6080/api';
+```
+

@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+     {
+      "label": "yarn: dev",
+      "type": "shell",
+      "command": "node loadEnv.js && yarn dev",
+      "isBackground": true,
+      "options": {
+                "cwd": "${workspaceFolder}/frontend",
+                "env": {
+                    "PORT": "3000"
+                }
+            },
+      "problemMatcher": {
+        "owner": "custom",
+        "fileLocation": ["relative", "${workspaceFolder}"],
+        "pattern": [
+          {
+            "regexp": "^(.*):(\\d+):(\\d+): (error|warning|debug): (.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          }
+        ],
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Compiled successfully",
+          "endsPattern": "Compiled successfully"
+        }
+      }
+    },
+     {
+        "label": "wait-for-backend",
+        "type": "shell",
+        "command": "sleep 2",
+        "problemMatcher": [],
+      }
+  ]
+}

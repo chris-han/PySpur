@@ -27,9 +27,11 @@ import {
   RunResponse,
 } from '@/types/api_types/runSchemas';
 
-const API_BASE_URL = typeof window !== 'undefined'
-  ? `http://${window.location.host}/api`
-  : 'http://localhost:6080/api';
+// const API_BASE_URL = typeof window !== 'undefined'
+//   ? `http://${window.location.host}/api`
+//   : 'http://localhost:6080/api';
+
+const API_BASE_URL = 'http://localhost:6080/api';
 
 export interface ApiKey {
   name: string;
@@ -244,6 +246,8 @@ export const getAllRuns = async (
       parent_only: parentOnly,
       run_type: runType,
     };
+    // console.log(`Making request to: ${API_BASE_URL}/run/?${new URLSearchParams( params )}`);
+    console.debug(`Making request to: ${API_BASE_URL}/run/?${new URLSearchParams( params )}`);    
     const response = await axios.get(`${API_BASE_URL}/run/`, { params });
     return response.data;
   } catch (error) {

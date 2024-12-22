@@ -1,0 +1,66 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug Frontend",
+            "type": "node",
+            "request": "launch",
+            "runtimeExecutable": "yarn",
+            "runtimeArgs": ["dev"],
+            "cwd": "${workspaceFolder}/frontend",
+            "env": {
+                "NODE_OPTIONS": "--inspect",
+                "VITE_API_URL": "http://localhost:6080",
+                "PORT": "3000"
+            },
+            "sourceMaps": true,
+            "console": "integratedTerminal",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "outFiles": ["${workspaceFolder}/frontend/dist/**/*.js"],
+            "resolveSourceMapLocations": [
+                "${workspaceFolder}/frontend/**",
+                "!**/node_modules/**"
+            ],
+             "presentation": {
+                "group": "Debug",
+                "order": 2
+             },
+             "preLaunchTask": "wait-for-backend"
+        },
+        {
+            "name": "Debug Backend",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "uvicorn",
+            "args": [
+                "app.api.main:app",
+                "--reload",
+                "--host",
+                "0.0.0.0",
+                "--port",
+                "6080"
+            ],
+            "cwd": "${workspaceFolder}/backend",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}/backend",
+                "PYTHONUNBUFFERED": "1"
+            },
+            "django": false,
+            "presentation": {
+                "group": "Debug",
+                "order": 1
+             }
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Debug Frontend & Backend",
+            "configurations": ["Debug Backend", "Debug Frontend"],
+            "stopAll": true
+            }
+    ]
+}
