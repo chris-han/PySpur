@@ -30,8 +30,7 @@ import {
 // const API_BASE_URL = typeof window !== 'undefined'
 //   ? `http://${window.location.host}/api`
 //   : 'http://localhost:6080/api';
-
-const API_BASE_URL = 'http://localhost:6080/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:6080/api';
 
 export interface ApiKey {
   name: string;

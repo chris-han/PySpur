@@ -9,9 +9,8 @@
             "runtimeArgs": ["dev"],
             "cwd": "${workspaceFolder}/frontend",
             "env": {
-                "NODE_OPTIONS": "--inspect",
-                "VITE_API_URL": "http://localhost:6080",
-                "PORT": "3000"
+                "NODE_OPTIONS": "--inspect"
+                // API_BASE_URL not here anymore we get it from .env file!
             },
             "sourceMaps": true,
             "console": "integratedTerminal",
@@ -29,7 +28,7 @@
              },
              "preLaunchTask": "wait-for-backend"
         },
-        {
+         {
             "name": "Debug Backend",
             "type": "debugpy",
             "request": "launch",
@@ -40,7 +39,7 @@
                 "--host",
                 "0.0.0.0",
                 "--port",
-                "6080"
+                "8000"
             ],
             "cwd": "${workspaceFolder}/backend",
             "console": "integratedTerminal",
