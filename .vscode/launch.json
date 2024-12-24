@@ -9,9 +9,11 @@
             "runtimeArgs": ["dev"],
             "cwd": "${workspaceFolder}/frontend",
             "env": {
-                "NODE_OPTIONS": "--inspect"
-                // API_BASE_URL not here anymore we get it from .env file!
+                "NEXT_PUBLIC_API_BASE_URL": "http://localhost:8000/api"
+                // Remove NODE_OPTIONS
             },
+            "address": "localhost",
+            "port": 9229,  // Use default debug port
             "sourceMaps": true,
             "console": "integratedTerminal",
             "skipFiles": [
@@ -22,11 +24,10 @@
                 "${workspaceFolder}/frontend/**",
                 "!**/node_modules/**"
             ],
-             "presentation": {
-                "group": "Debug",
-                "order": 2
-             },
-             "preLaunchTask": "wait-for-backend"
+            "presentation": {
+                "group": "Debug"
+            },
+            "preLaunchTask": "wait-for-backend"
         },
          {
             "name": "Debug Backend",
