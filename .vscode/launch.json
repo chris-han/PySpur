@@ -60,6 +60,10 @@
             "name": "Debug Frontend & Backend",
             "configurations": ["Debug Backend", "Debug Frontend"],
             "stopAll": true
-            }
-    ]
+        }
+    ],
+    "type": "setting",
+    "settings": {
+        "debug.defaultLaunchConfiguration": "Debug Frontend & Backend"
+    }
 }
