@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { deleteNode, setSelectedNode, updateNodeData, addNode, setEdges } from '../../store/flowSlice';
+import { deleteNode, setSelectedNode, updateNodeData, addNode, setEdges, updateNodeTitle } from '../../store/flowSlice';
 import { Handle, getConnectedEdges, Node, Edge, Position } from '@xyflow/react';
 import { v4 as uuidv4 } from 'uuid';
 import {
@@ -57,15 +57,18 @@ const getNodeTitle = (data: NodeData = {}): string => {
 };
 
 const nodeComparator = (prevNode: FlowWorkflowNode, nextNode: FlowWorkflowNode) => {
+  if (!prevNode || !nextNode) return false;
   // Skip position and measured properties when comparing nodes
   const { position: prevPosition, measured: prevMeasured, ...prevRest } = prevNode;
   const { position: nextPosition, measured: nextMeasured, ...nextRest } = nextNode;
   return isEqual(prevRest, nextRest);
-}
+};
 
 const nodesComparator = (prevNodes: FlowWorkflowNode[], nextNodes: FlowWorkflowNode[]) => {
+  if (!prevNodes || !nextNodes) return false;
+  if (prevNodes.length !== nextNodes.length) return false;
   return prevNodes.every((node, index) => nodeComparator(node, nextNodes[index]));
-}
+};
 
 const staticStyles = {
   container: {
@@ -119,6 +122,21 @@ const staticStyles = {
   }
 } as const;
 
+const convertToPythonVariableName = (str: string): string => {
+  // Replace spaces and hyphens with underscores
+  str = str.replace(/[\s-]/g, '_');
+
+  // Remove any non-alphanumeric characters except underscores
+  str = str.replace(/[^a-zA-Z0-9_]/g, '');
+
+  // Ensure the first character is a letter or underscore
+  if (!/^[a-zA-Z_]/.test(str)) {
+    str = '_' + str;
+  }
+
+  return str;
+};
+
 const BaseNode: React.FC<BaseNodeProps> = ({
   isCollapsed,
   setIsCollapsed,
@@ -135,6 +153,7 @@ const BaseNode: React.FC<BaseNodeProps> = ({
   const [editingTitle, setEditingTitle] = useState(false);
   const [isRunning, setIsRunning] = useState(false);
   const [showTitleError, setShowTitleError] = useState(false);
+  const [titleInputValue, setTitleInputValue] = useState('');
   const dispatch = useDispatch();
 
   // Retrieve the node's position and edges from the Redux store
@@ -153,49 +172,51 @@ const BaseNode: React.FC<BaseNodeProps> = ({
   }, isEqual);
 
   const availableOutputs = useSelector((state: RootState) => {
-    const nodes = state.flow.nodes;
-    const availableOutputs: Record<string, any> = {};
+    const nodes = state.flow.nodes.map(node => ({
+      id: node.id,
+      data: {
+        run: node.data?.run
+      }
+    }));
+
+    const outputs: Record<string, any> = {};
     nodes.forEach((node) => {
       if (node.data && node.data.run) {
-        availableOutputs[node.id] = node.data.run;
+        outputs[node.id] = node.data.run;
       }
     });
-    return availableOutputs;
+    return outputs;
   }, isEqual);
 
   const { executePartialRun, loading } = usePartialRun();
 
   const handleMouseEnter = useCallback(() => {
-    if (!isHovered) {
-      setIsHovered(true);
-    }
-    if (!showControls){
-      setShowControls(true);
-    }
-  }, []);
+    setIsHovered(true);
+    setShowControls(true);
+  }, [setIsHovered, setShowControls]);
 
   const handleMouseLeave = useCallback(() => {
-    if (isHovered) {
-      setIsHovered(false);
-    }
-    if (!isTooltipHovered && showControls) {
+    setIsHovered(false);
+    if (!isTooltipHovered) {
       setTimeout(() => {
         setShowControls(false);
       }, 200);
     }
-  }, []);
+  }, [setIsHovered, setShowControls, isTooltipHovered]);
 
   const handleControlsMouseEnter = useCallback(() => {
-    if (!showControls) setShowControls(true);
-    if (!isTooltipHovered) setIsTooltipHovered(true);
-  }, []);
+    setShowControls(true);
+    setIsTooltipHovered(true);
+  }, [setShowControls, setIsTooltipHovered]);
 
   const handleControlsMouseLeave = useCallback(() => {
-    if (isTooltipHovered) setIsTooltipHovered(false);
+    setIsTooltipHovered(false);
     setTimeout(() => {
-      if (!isHovered && showControls) setShowControls(false);
+      if (!isHovered) {
+        setShowControls(false);
+      }
     }, 300);
-  }, []);
+  }, [isHovered, setShowControls, setIsTooltipHovered]);
 
   const handleDelete = () => {
     dispatch(deleteNode({ nodeId: id }));
@@ -334,23 +355,10 @@ const BaseNode: React.FC<BaseNodeProps> = ({
   }), [color]);
 
   const handleTitleChange = (newTitle: string) => {
-    if (newTitle && /\s/.test(newTitle)) {
-      setShowTitleError(true);
-      return;
+    const validTitle = convertToPythonVariableName(newTitle);
+    if (validTitle && validTitle !== getNodeTitle(data)) {
+      dispatch(updateNodeTitle({ nodeId: id, newTitle: validTitle }));
     }
-    setShowTitleError(false);
-    if (newTitle && newTitle !== getNodeTitle(data)) {
-      dispatch(updateNodeData({
-        id,
-        data: {
-          config: {
-            ...data.config,
-            title: newTitle,
-          },
-        },
-      }));
-    }
-    setEditingTitle(false);
   };
 
   const headerStyle = React.useMemo(() => ({
@@ -403,20 +411,21 @@ const BaseNode: React.FC<BaseNodeProps> = ({
                 {editingTitle ? (
                   <Input
                     autoFocus
-                    defaultValue={getNodeTitle(data)}
+                    value={titleInputValue}
                     size="sm"
                     variant="faded"
                     radius="lg"
-                    onBlur={(e) => handleTitleChange(e.target.value)}
+                    onChange={(e) => {
+                      const validValue = convertToPythonVariableName(e.target.value);
+                      setTitleInputValue(validValue);
+                      handleTitleChange(validValue);
+                    }}
+                    onBlur={() => setEditingTitle(false)}
                     onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === 'Enter' || e.key === 'Escape') {
                         e.stopPropagation();
                         e.preventDefault();
-                        if (e.key === 'Enter') {
-                          handleTitleChange((e.target as HTMLInputElement).value);
-                        } else {
-                          setEditingTitle(false);
-                        }
+                        setEditingTitle(false);
                       }
                     }}
                     classNames={{
@@ -428,7 +437,10 @@ const BaseNode: React.FC<BaseNodeProps> = ({
                   <h3
                     className="text-lg font-semibold text-center cursor-pointer hover:text-primary"
                     style={titleStyle}
-                    onClick={() => setEditingTitle(true)}
+                    onClick={() => {
+                      setTitleInputValue(getNodeTitle(data));
+                      setEditingTitle(true);
+                    }}
                   >
                     {getNodeTitle(data)}
                   </h3>
